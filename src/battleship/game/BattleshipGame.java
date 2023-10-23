@@ -1,12 +1,11 @@
-package battleship;
+package battleship.game;
 
-import battleship.game.Field;
 import battleship.util.FieldPrintHelper;
 
-public class Main {
-
-    public static void main(String[] args) {
+public class BattleshipGame {
+    public void play() {
         Field field = new Field();
         FieldPrintHelper.printAllyFieldView(field);
+
     }
 }
