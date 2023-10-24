@@ -1,26 +1,32 @@
 package battleship.util;
 
-import battleship.game.Field;
+import battleship.game.GameField;
+import battleship.game.GameCell;
 
 import static battleship.util.Constants.FieldPrinterConstants.*;
 import static battleship.util.Constants.FieldConstants.*;
 
 public class FieldPrintHelper {
-    public static void printAllyFieldView(Field field) {
-        System.out.println(generateGlobalFieldView((field)).replaceAll("[" + MISS_SHOT + HIT + "]", FOG));
+    public static void printAllyFieldView(GameField field) {
+        System.out.println(generateGlobalFieldView((field)).replaceAll(ALLY_FILTER_REGEX, FOG));
     }
 
-    public static void printEnemyFieldView(Field field) {
-        System.out.println(generateGlobalFieldView((field)).replaceAll("[" + SHIP + "]", FOG));
+    public static void printEnemyFieldView(GameField field) {
+        System.out.println(generateGlobalFieldView((field)).replaceAll(ENEMY_FILTER_REGEX, FOG));
     }
 
-    private static String generateGlobalFieldView(Field field) {
+    public static void printGodFieldView(GameField field) {
+        System.out.println(generateGlobalFieldView((field)));
+    }
+
+    private static String generateGlobalFieldView(GameField field) {
         StringBuilder stringBuilder = new StringBuilder(generateColumnNumbersString());
         char lineIdentifier = 'A';
         for (int i = 0; i < FIELD_SIZE; i++) {
             stringBuilder.append(FIRST_CELL.formatted(lineIdentifier));
             for (int j = 0; j < FIELD_SIZE; j++) {
-                stringBuilder.append(CELL.formatted(field.getCellAsString((char) (lineIdentifier + 1), j + 1)));
+                stringBuilder.append(CELL.formatted(field.getCellData(
+                        new GameCell(lineIdentifier, j + 1))));
             }
             stringBuilder.append(NEW_LINE);
             lineIdentifier ++;
