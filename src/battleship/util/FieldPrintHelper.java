@@ -19,6 +19,9 @@ public class FieldPrintHelper {
         System.out.println(generateGlobalFieldView((field)));
     }
 
+    public static void printTrainingFieldView(GameField field) {
+        System.out.println(generateGlobalFieldView(field).replaceAll(TRAINING_FILTER_REGEX, FOG));
+    }
     private static String generateGlobalFieldView(GameField field) {
         StringBuilder stringBuilder = new StringBuilder(generateColumnNumbersString());
         char lineIdentifier = 'A';

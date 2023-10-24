@@ -2,15 +2,19 @@ package battleship.game;
 
 import battleship.util.Constants;
 import battleship.util.GameFieldAlteringResult;
+import battleship.util.CellType;
 
 import static battleship.util.Constants.FieldConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class GameField {
-    private static final List<List<String>> field = new ArrayList<>();
+    private final List<List<String>> field = new ArrayList<>();
+
+    private int numberOfAliveShipCells = 0;
 
     public GameField() {
         populateInitialField();
@@ -34,14 +38,6 @@ public class GameField {
         return field.get(cell.getLineIndex()).get(cell.getColumnIndex());
     }
 
-    private int fieldCoordinateToIndex(char line) {
-        return line - LINE_INDEX_DIFFERENCE;
-    }
-
-    private int fieldCoordinateToIndex(int column) {
-        return column - COLUMN_INDEX_DIFFERENCE;
-    }
-
     public GameFieldAlteringResult addShip(GameCell frontCell, GameCell rearCell) {
         if (isCellNotOnTheField(frontCell) || isCellNotOnTheField(rearCell)) {
             return GameFieldAlteringResult.OUT_OF_FIELD;
@@ -51,6 +47,21 @@ public class GameField {
             setCells(frontCell, rearCell);
             return GameFieldAlteringResult.ALTERED;
         }
+    }
+
+    public GameFieldAlteringResult registerShoot(GameCell shotCoordinates) {
+        if (isCellNotOnTheField(shotCoordinates)) {
+            return GameFieldAlteringResult.OUT_OF_FIELD;
+        } else {
+            setCell(shotCoordinates, CellType.SHOT);
+            return getCellData(shotCoordinates).equals(HIT)
+                    ? GameFieldAlteringResult.HIT
+                    : GameFieldAlteringResult.MISS;
+        }
+    }
+
+    public void setCell(GameCell shotCoordinates, CellType cellType) {
+        setCell(shotCoordinates.getLineIndex(), shotCoordinates.getColumnIndex(), cellType);
     }
 
     private void setCells(GameCell frontCell, GameCell rearCell) {
@@ -69,52 +80,65 @@ public class GameField {
         int minDynamic = Math.min(dynamicCoordinateStart, dynamicCoordinateFinish);
         for (int i = minDynamic; i <= maxDynamic; i++) {
             if (sameLine) {
-                setShipCell(constantCoordinate, i);
+                setCell(constantCoordinate, i, CellType.SHIP);
                 setReservedCells(constantCoordinate, i);
             } else {
-                setShipCell(i, constantCoordinate);
+                setCell(i, constantCoordinate, CellType.SHIP);
                 setReservedCells(i, constantCoordinate);
             }
 
         }
     }
 
-    private void setShipCell(int i, int j) {
-        field.get(i).set(j, SHIP);
-    }
-
     private void setReservedCells(int i, int j) {
         if (i - 1 >= 0 && j - 1 >= 0) {
-            setReserved(i - 1, j - 1);
-            setReserved(i, j - 1);
-            setReserved(i - 1, j);
+            setCell(i - 1, j - 1, CellType.RESERVED);
+            setCell(i, j - 1, CellType.RESERVED);
+            setCell(i - 1, j, CellType.RESERVED);
         } else if (j - 1 >= 0) {
-            setReserved(i, j -1);
+            setCell(i, j -1, CellType.RESERVED);
         } else if (i - 1 >= 0) {
-            setReserved(i - 1, j);
+            setCell(i - 1, j, CellType.RESERVED);
         }
 
         if (i + 1 < FIELD_SIZE && j + 1 < FIELD_SIZE) {
-            setReserved(i + 1, j + 1);
-            setReserved(i + 1, j);
-            setReserved(i, j + 1);
+            setCell(i + 1, j + 1, CellType.RESERVED);
+            setCell(i + 1, j, CellType.RESERVED);
+            setCell(i, j + 1, CellType.RESERVED);
         } else if (i + 1 < FIELD_SIZE) {
-            setReserved(i + 1, j);
+            setCell(i + 1, j, CellType.RESERVED);
         } else if (j + 1 < FIELD_SIZE) {
-            setReserved(i, j + 1);
+            setCell(i, j + 1, CellType.RESERVED);
         }
 
         if (i + 1  < FIELD_SIZE && j - 1 >= 0) {
-            setReserved(i + 1, j - 1);
+            setCell(i + 1, j - 1, CellType.RESERVED);
         }
         if (i - 1 >= 0 && j + 1 < FIELD_SIZE) {
-            setReserved(i - 1, j + 1);
+            setCell(i - 1, j + 1, CellType.RESERVED);
         }
     }
 
-    private void setReserved(int i, int j) {
-        if (!field.get(i).get(j).equals(SHIP)) {
-            field.get(i).set(j, RESERVED);
+
+    private void setCell(int i, int j, CellType cellType) {
+        switch (cellType) {
+            case SHIP -> {
+                field.get(i).set(j, SHIP);
+                numberOfAliveShipCells ++;
+            }
+            case RESERVED -> {
+                if (!field.get(i).get(j).equals(SHIP)) {
+                    field.get(i).set(j, RESERVED);
+                }
+            }
+            case SHOT -> {
+                String actualCellValue = field.get(i).get(j);
+                if (actualCellValue.equals(SHIP)) {
+                    field.get(i).set(j, HIT);
+                } else if (actualCellValue.equals(FOG) || actualCellValue.equals(RESERVED)) {
+                    field.get(i).set(j, MISS_SHOT);
+                }
+            }
         }
     }
 

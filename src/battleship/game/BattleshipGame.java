@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import battleship.util.CustomMessages;
 import battleship.util.FieldPrintHelper;
-import battleship.util.GameFieldAlteringResult;
 
 import static battleship.util.CustomMessages.GamePlayMessage.*;
 import static battleship.util.CustomMessages.GamePlayErrorMessage.*;
@@ -26,8 +24,51 @@ public class BattleshipGame {
         field = new GameField();
     }
     public void play() {
-        FieldPrintHelper.printGodFieldView(field);
+        FieldPrintHelper.printAllyFieldView(field);
         placeShips();
+
+        System.out.println();
+        System.out.println(THE_GAME_STARTS);
+
+        takeShoots();
+        FieldPrintHelper.printTrainingFieldView(field);
+    }
+
+    private void takeShoots() {
+        takeShoot();
+    }
+
+    private void takeShoot() {
+        main_loop:
+        while (true) {
+            System.out.println();
+            System.out.println(TAKE_A_SHOT);
+            String userInput = readUsersInputFromConsole();
+            InputValidationState inputValidationResult = validateUserInputShoot(userInput);
+            if (inputValidationResult != InputValidationState.VALID) {
+                switch (inputValidationResult) {
+                    case WRONG_FORMAT -> {}
+                }
+            } else {
+                GameCell shootCoordinates = new GameCell(userInput);
+                switch(field.registerShoot(shootCoordinates)) {
+                    case OUT_OF_FIELD -> {
+                        System.out.println();
+                        System.out.println(WRONG_COORDINATES);
+                    }
+                    case HIT -> {
+                        System.out.println();
+                        System.out.println(YOU_HIT_A_SHIP);
+                        break main_loop;
+                    }
+                    case MISS -> {
+                        System.out.println();
+                        System.out.println(YOU_MISSED);
+                        break main_loop;
+                    }
+                }
+            }
+        }
     }
 
     private void placeShips() {
@@ -66,10 +107,13 @@ public class BattleshipGame {
         while (true) {
             String userRawInput = readUsersInputFromConsole();
             List<String> userProvidedCoordinates = new ArrayList<>(Arrays.asList(userRawInput.split(" ")));
-            InputValidationState validationResult = validateUserInput(userProvidedCoordinates);
+            InputValidationState validationResult = validateUserInputPlanningStage(userProvidedCoordinates);
             if (validationResult != InputValidationState.VALID) {
                 switch (validationResult) {
-                    case NOT_SAME_LANE_OR_COLUMN -> {}
+                    case NOT_SAME_LANE_OR_COLUMN -> {
+                        System.out.println();
+                        System.out.println(WRONG_SHIP_LOCATION);
+                    }
                     case WRONG_FORMAT -> {}
                     case WRONG_SIZE -> {}
                 }
@@ -114,11 +158,19 @@ public class BattleshipGame {
         return scanner.nextLine();
     }
 
-    private InputValidationState validateUserInput(List<String> userProvidedCoordinates) {
+    private InputValidationState validateUserInputShoot(String userProvidedCoordinates) {
+        if (isNotValidCoordinateFormat(userProvidedCoordinates)) {
+            return InputValidationState.WRONG_FORMAT;
+        } else {
+            return InputValidationState.VALID;
+        }
+    }
+
+    private InputValidationState validateUserInputPlanningStage(List<String> userProvidedCoordinates) {
         if (userProvidedCoordinates.size() != 2) {
             return InputValidationState.WRONG_SIZE;
-        } else if (!isValidCoordinateFormat(userProvidedCoordinates.get(0))
-                || !isValidCoordinateFormat(userProvidedCoordinates.get(1))) {
+        } else if (isNotValidCoordinateFormat(userProvidedCoordinates.get(0))
+                || isNotValidCoordinateFormat(userProvidedCoordinates.get(1))) {
             return InputValidationState.WRONG_FORMAT;
         } else if (!isTheSameLineIdentifier(userProvidedCoordinates)
                 && !isTheSameColumnIdentifier(userProvidedCoordinates)) {
@@ -136,18 +188,18 @@ public class BattleshipGame {
         return coordinates.get(0).substring(1).equals(coordinates.get(1).substring(1));
     }
 
-    private boolean isValidCoordinateFormat(String coordinate) {
+    private boolean isNotValidCoordinateFormat(String coordinate) {
         if (coordinate.length() < 2) {
-            return false;
+            return true;
         } else if (coordinate.charAt(0) < 'A' || coordinate.charAt(0) > 'Z') {
-            return false;
+            return true;
         } else {
             try {
                 Integer.parseInt(coordinate.substring(1));
             } catch (NumberFormatException e) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }
