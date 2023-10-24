@@ -34,7 +34,7 @@ public class FieldPrintHelper {
             stringBuilder.append(NEW_LINE);
             lineIdentifier ++;
         }
-        return stringBuilder.replace(stringBuilder.length() - 1, stringBuilder.length(), "").toString();
+        return stringBuilder.substring(0, stringBuilder.length() - 2);
     }
 
     private static String generateColumnNumbersString() {

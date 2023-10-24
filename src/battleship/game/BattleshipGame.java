@@ -24,11 +24,14 @@ public class BattleshipGame {
         field = new GameField();
     }
     public void play() {
-        FieldPrintHelper.printAllyFieldView(field);
+        FieldPrintHelper.printEnemyFieldView(field);
         placeShips();
 
         System.out.println();
         System.out.println(THE_GAME_STARTS);
+
+        System.out.println();
+        FieldPrintHelper.printEnemyFieldView(field);
 
         takeShoots();
         FieldPrintHelper.printTrainingFieldView(field);
@@ -107,7 +110,7 @@ public class BattleshipGame {
         while (true) {
             String userRawInput = readUsersInputFromConsole();
             List<String> userProvidedCoordinates = new ArrayList<>(Arrays.asList(userRawInput.split(" ")));
-            InputValidationState validationResult = validateUserInputPlanningStage(userProvidedCoordinates);
+            InputValidationState validationResult = validateUserInputStrategyStage(userProvidedCoordinates);
             if (validationResult != InputValidationState.VALID) {
                 switch (validationResult) {
                     case NOT_SAME_LANE_OR_COLUMN -> {
@@ -120,7 +123,7 @@ public class BattleshipGame {
             } else {
                 GameCell frontCell = new GameCell(userProvidedCoordinates.get(0));
                 GameCell rearCell = new GameCell(userProvidedCoordinates.get(1));
-                if (!isCorrectSize(getSizeFromCoordinates(frontCell, rearCell), shipType)) {
+                if (!isShipOfCorrectSize(getShipSizeFromCoordinates(frontCell, rearCell), shipType)) {
                     System.out.println();
                     System.out.printf((WRONG_SHIP_SIZE) + "%n", shipType.getName());
                 } else {
@@ -142,11 +145,11 @@ public class BattleshipGame {
         }
     }
 
-    private boolean isCorrectSize(int providedShipSize, ShipType shipType) {
+    private boolean isShipOfCorrectSize(int providedShipSize, ShipType shipType) {
         return providedShipSize == shipType.getSize();
     }
 
-    private int getSizeFromCoordinates(GameCell frontCell, GameCell rearCell) {
+    private int getShipSizeFromCoordinates(GameCell frontCell, GameCell rearCell) {
         return Math.max(
                 Math.abs(frontCell.getLine() - rearCell.getLine()),
                 Math.abs(frontCell.getColumn() - rearCell.getColumn())
@@ -166,7 +169,7 @@ public class BattleshipGame {
         }
     }
 
-    private InputValidationState validateUserInputPlanningStage(List<String> userProvidedCoordinates) {
+    private InputValidationState validateUserInputStrategyStage(List<String> userProvidedCoordinates) {
         if (userProvidedCoordinates.size() != 2) {
             return InputValidationState.WRONG_SIZE;
         } else if (isNotValidCoordinateFormat(userProvidedCoordinates.get(0))
