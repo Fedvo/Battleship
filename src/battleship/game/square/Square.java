@@ -6,6 +6,8 @@ public class Square {
     private char line;
     private int column;
 
+    private String data;
+
     public Square(char line, int column) {
         this.line = line;
         this.column = column;
@@ -27,15 +29,23 @@ public class Square {
         }
     }
 
+    public Square() {
+        this.data = Constants.FieldConstants.FOG;
+    }
+
     public void setLine(char line) {
         this.line = line;
+    }
+
+    public void setLineFromIndex(int i) {
+        setLine((char) (i + Constants.FieldConstants.LINE_INDEX_DIFFERENCE));
     }
 
     public char getLine() {
         return this.line;
     }
 
-    public int getLineIndex() {
+    public int getLineAsIndex() {
         return this.line - Constants.FieldConstants.LINE_INDEX_DIFFERENCE;
     }
 
@@ -43,12 +53,24 @@ public class Square {
         this.column = column;
     }
 
+    public void setColumnFromIndex(int column) {
+        setColumn(column + Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE);
+    }
+
     public int getColumn() {
         return this.column;
     }
 
-    public int getColumnIndex() {
+    public int getColumnAsIndex() {
         return this.column - Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE;
+    }
+
+    public String getData() {
+        return this.data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
     }
 
     @Override

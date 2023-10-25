@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GameGrid {
-    private final String[][] grid = new String[FIELD_SIZE][FIELD_SIZE];
+    private final Square[][] grid = new Square[FIELD_SIZE][FIELD_SIZE];
     private final List<Ship> listOfShips = new ArrayList<>();
     private Ship currentShip;
     private int numberOfSquaresOccupiedByShips = 0;
@@ -24,7 +24,9 @@ public class GameGrid {
 
     private void populateInitialField() {
         for (int i = 0; i < FIELD_SIZE; i++) {
-            grid[i] = FOG.repeat(FIELD_SIZE).split("");
+            for (int j = 0; j < FIELD_SIZE; j++) {
+                grid[i][j] = new Square();
+            }
         }
     }
 
@@ -37,15 +39,15 @@ public class GameGrid {
                     "Wrong column identifier [" + cell.getColumn() + "]. Can be any integer between 1 and " +
                             FIELD_SIZE + " (inclusive)");
         }
-        return getValueFromGrid(cell.getLineIndex(), cell.getColumnIndex());
+        return getValueFromGrid(cell.getLineAsIndex(), cell.getColumnAsIndex());
     }
 
     private String getValueFromGrid(int i, int j) {
-        return grid[i][j];
+        return grid[i][j].getData();
     }
 
     private void setValueInGrid(int i, int j, String value) {
-        grid[i][j] = value;
+        grid[i][j].setData(value);
     }
 
     public GridModificationResult addShip(Square frontCell, Square rearCell, ShipType shipType) {
@@ -83,16 +85,16 @@ public class GameGrid {
     }
 
     public void setCell(Square shotCoordinates, SquareType cellType) {
-        setCell(shotCoordinates.getLineIndex(), shotCoordinates.getColumnIndex(), cellType);
+        setCell(shotCoordinates.getLineAsIndex(), shotCoordinates.getColumnAsIndex(), cellType);
     }
 
     private void setShipCells(Square frontCell, Square rearCell) {
-        int frontLine = frontCell.getLineIndex();
-        int rearLine = rearCell.getLineIndex();
+        int frontLine = frontCell.getLineAsIndex();
+        int rearLine = rearCell.getLineAsIndex();
         if (frontLine == rearLine) {
-            setShipCells(frontLine, frontCell.getColumnIndex(), rearCell.getColumnIndex(), true);
+            setShipCells(frontLine, frontCell.getColumnAsIndex(), rearCell.getColumnAsIndex(), true);
         } else {
-            setShipCells(frontCell.getColumnIndex(), frontLine, rearLine, false);
+            setShipCells(frontCell.getColumnAsIndex(), frontLine, rearLine, false);
         }
     }
 
@@ -182,19 +184,19 @@ public class GameGrid {
     }
 
     private boolean isCellNotOnTheField(Square cell) {
-        return cell.getLineIndex() < 0
-                || cell.getLineIndex() >= FIELD_SIZE
-                || cell.getColumnIndex() < 0
-                || cell.getColumnIndex() >= FIELD_SIZE;
+        return cell.getLineAsIndex() < 0
+                || cell.getLineAsIndex() >= FIELD_SIZE
+                || cell.getColumnAsIndex() < 0
+                || cell.getColumnAsIndex() >= FIELD_SIZE;
     }
 
     private boolean isToCloseToOtherShip(Square frontCell, Square rearCell) {
-        int frontLine = frontCell.getLineIndex();
-        int rearLine = rearCell.getLineIndex();
+        int frontLine = frontCell.getLineAsIndex();
+        int rearLine = rearCell.getLineAsIndex();
         if (frontLine == rearLine) {
-            return isAnyCellReserved(frontLine, frontCell.getColumnIndex(), rearCell.getColumnIndex(), true);
+            return isAnyCellReserved(frontLine, frontCell.getColumnAsIndex(), rearCell.getColumnAsIndex(), true);
         } else {
-            return isAnyCellReserved(frontCell.getColumnIndex(), frontLine, rearLine, false);
+            return isAnyCellReserved(frontCell.getColumnAsIndex(), frontLine, rearLine, false);
         }
     }
 
