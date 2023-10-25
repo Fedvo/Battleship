@@ -1,22 +1,22 @@
-package battleship.game;
+package battleship.game.square;
 
 import battleship.util.Constants;
 
-public class GameCell {
+public class Square {
     private char line;
     private int column;
 
-    public GameCell(char line, int column) {
+    public Square(char line, int column) {
         this.line = line;
         this.column = column;
     }
 
-    public GameCell(int line, int column) {
+    public Square(int line, int column) {
         this.line = (char) (line + Constants.FieldConstants.LINE_INDEX_DIFFERENCE);
         this.column = column + Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE;
     }
 
-    public GameCell(String input) {
+    public Square(String input) {
         try {
             this.column = Integer.parseInt(input.substring(1));
             this.line = input.substring(0, 1).charAt(0);
@@ -53,7 +53,7 @@ public class GameCell {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof GameCell other)) {
+        if (!(obj instanceof Square other)) {
             return false;
         } else {
             return this.line == other.line && this.column == other.column;

@@ -1,11 +1,13 @@
-package battleship.game;
+package battleship.game.ship;
+
+import battleship.game.square.Square;
 
 import java.util.List;
 import java.util.ArrayList;
 
 public class Ship {
-    private final List<GameCell> listOfOccupiedCells = new ArrayList<>();
-    private final List<GameCell> listOfExistingCells = new ArrayList<>();
+    private final List<Square> listOfOccupiedCells = new ArrayList<>();
+    private final List<Square> listOfExistingCells = new ArrayList<>();
 
     private int numberOfExistingCells;
 
@@ -16,12 +18,12 @@ public class Ship {
         numberOfExistingCells = shipType.getSize();
     }
 
-    public void addCell(GameCell cell) {
+    public void addCell(Square cell) {
         listOfOccupiedCells.add(cell);
         listOfExistingCells.add(cell);
     }
 
-    public void destroyCell(GameCell cell) {
+    public void destroyCell(Square cell) {
         if (listOfExistingCells.contains(cell)) {
             listOfExistingCells.remove(cell);
             numberOfExistingCells--;
@@ -32,7 +34,7 @@ public class Ship {
         return numberOfExistingCells > 0;
     }
 
-    public boolean containsCell(GameCell cell) {
+    public boolean containsCell(Square cell) {
         return listOfOccupiedCells.contains(cell);
     }
 

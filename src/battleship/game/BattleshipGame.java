@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import battleship.util.FieldPrintHelper;
-import battleship.util.GameFieldAlteringResult;
+import battleship.game.square.Square;
+import battleship.game.grid.GameGrid;
+import battleship.game.grid.GameGridPrintHelper;
+import battleship.game.ship.ShipType;
+import battleship.game.grid.GridModificationResult;
 
 import static battleship.util.CustomMessages.GamePlayMessage.*;
 import static battleship.util.CustomMessages.GamePlayErrorMessage.*;
@@ -19,12 +22,12 @@ public class BattleshipGame {
         VALID
     }
     private final Scanner scanner = new Scanner(System.in);
-    private final GameField fieldPlayer1;
-    private final GameField fieldPlayer2;
+    private final GameGrid fieldPlayer1;
+    private final GameGrid fieldPlayer2;
 
     public BattleshipGame() {
-        fieldPlayer1 = new GameField();
-        fieldPlayer2 = new GameField();
+        fieldPlayer1 = new GameGrid();
+        fieldPlayer2 = new GameGrid();
     }
     public void play() {
         System.out.println(PLAYER_1_PLANNING_STAGE);
@@ -50,7 +53,7 @@ public class BattleshipGame {
 
         while (true) {
             System.out.println();
-            FieldPrintHelper.printPVPView(fieldPlayer2, fieldPlayer1);
+            GameGridPrintHelper.printPVPView(fieldPlayer2, fieldPlayer1);
 
             if (isLastTakenShot(fieldPlayer2)) {
                 break;
@@ -62,7 +65,7 @@ public class BattleshipGame {
             scanner.nextLine();
 
             System.out.println();
-            FieldPrintHelper.printPVPView(fieldPlayer1, fieldPlayer2);
+            GameGridPrintHelper.printPVPView(fieldPlayer1, fieldPlayer2);
 
             if (isLastTakenShot(fieldPlayer1)) {
                 break;
@@ -78,7 +81,7 @@ public class BattleshipGame {
         System.out.println(YOU_SANK_LAST_SHIP);
     }
 
-    private boolean isLastTakenShot(GameField field) {
+    private boolean isLastTakenShot(GameGrid field) {
         main_loop:
         while (true) {
             String userInput = readUsersInputFromConsole();
@@ -88,33 +91,33 @@ public class BattleshipGame {
                     case WRONG_FORMAT -> {}
                 }
             } else {
-                GameCell shootCoordinates = new GameCell(userInput);
-                GameFieldAlteringResult result = field.registerShoot(shootCoordinates);
+                Square shootCoordinates = new Square(userInput);
+                GridModificationResult result = field.registerShoot(shootCoordinates);
 
                 System.out.println();
-                FieldPrintHelper.printEnemyFieldView(field);
+                GameGridPrintHelper.printEnemyFieldView(field);
 
                 switch(result) {
-                    case OUT_OF_FIELD -> {
+                    case SHIP_OUT_OF_GRID -> {
                         System.out.println();
                         System.out.println(WRONG_COORDINATES);
                     }
-                    case HIT -> {
+                    case HIT_REGISTERED -> {
                         System.out.println();
                         System.out.println(YOU_HIT_A_SHIP);
                         break main_loop;
                     }
-                    case MISS -> {
+                    case MISS_REGISTERED -> {
                         System.out.println();
                         System.out.println(YOU_MISSED);
                         break main_loop;
                     }
-                    case SANK_A_SHIP -> {
+                    case SHIP_SANK -> {
                         System.out.println();
                         System.out.println(YOU_SANK_A_SHIP);
                         break main_loop;
                     }
-                    case YOU_WON -> {
+                    case WINNER -> {
                         return true;
                     }
                 }
@@ -124,9 +127,9 @@ public class BattleshipGame {
         return false;
     }
 
-    private void placeShips(GameField field) {
+    private void placeShips(GameGrid field) {
         System.out.println();
-        FieldPrintHelper.printEnemyFieldView(field);
+        GameGridPrintHelper.printEnemyFieldView(field);
 
         for (ShipType shipType : ShipType.values()) {
             switch (shipType) {
@@ -154,11 +157,11 @@ public class BattleshipGame {
             placeShip(shipType, field);
 
             System.out.println();
-            FieldPrintHelper.printAllyFieldView(field);
+            GameGridPrintHelper.printAllyFieldView(field);
         }
     }
 
-    private void placeShip(ShipType shipType, GameField field) {
+    private void placeShip(ShipType shipType, GameGrid field) {
         main_loop:
         while (true) {
             String userRawInput = readUsersInputFromConsole();
@@ -174,22 +177,22 @@ public class BattleshipGame {
                     case WRONG_SIZE -> {}
                 }
             } else {
-                GameCell frontCell = new GameCell(userProvidedCoordinates.get(0));
-                GameCell rearCell = new GameCell(userProvidedCoordinates.get(1));
+                Square frontCell = new Square(userProvidedCoordinates.get(0));
+                Square rearCell = new Square(userProvidedCoordinates.get(1));
                 if (!isShipOfCorrectSize(getShipSizeFromCoordinates(frontCell, rearCell), shipType)) {
                     System.out.println();
                     System.out.printf((WRONG_SHIP_SIZE) + "%n", shipType.getName());
                 } else {
                     switch(field.addShip(frontCell, rearCell, shipType)) {
-                        case OUT_OF_FIELD -> {
+                        case SHIP_OUT_OF_GRID -> {
                             System.out.println();
                             System.out.println(WRONG_SHIP_LOCATION);
                         }
-                        case TOO_CLOSE -> {
+                        case SHIPS_TO_CLOSE -> {
                             System.out.println();
                             System.out.println(TOO_CLOSE_TO_ANOTHER_SHIP);
                         }
-                        case ALTERED -> {
+                        case SHIP_PLACED -> {
                             break main_loop;
                         }
                     }
@@ -202,7 +205,7 @@ public class BattleshipGame {
         return providedShipSize == shipType.getSize();
     }
 
-    private int getShipSizeFromCoordinates(GameCell frontCell, GameCell rearCell) {
+    private int getShipSizeFromCoordinates(Square frontCell, Square rearCell) {
         return Math.max(
                 Math.abs(frontCell.getLine() - rearCell.getLine()),
                 Math.abs(frontCell.getColumn() - rearCell.getColumn())
