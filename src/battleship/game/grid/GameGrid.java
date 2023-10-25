@@ -6,14 +6,14 @@ import battleship.game.ship.ShipType;
 import battleship.util.Constants;
 import battleship.game.square.SquareType;
 
-import static battleship.util.Constants.FieldConstants.*;
+import static battleship.util.Constants.GridConstants.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class GameGrid {
-    private final Square[][] grid = new Square[FIELD_SIZE][FIELD_SIZE];
+    private final Square[][] grid = new Square[GRID_SIZE][GRID_SIZE];
     private final List<Ship> listOfShips = new ArrayList<>();
     private Ship currentShip;
     private int numberOfSquaresOccupiedByShips = 0;
@@ -23,53 +23,165 @@ public class GameGrid {
     }
 
     private void populateInitialField() {
-        for (int i = 0; i < FIELD_SIZE; i++) {
-            for (int j = 0; j < FIELD_SIZE; j++) {
-                grid[i][j] = new Square();
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                grid[i][j] = new Square(i, j, FOG);
             }
         }
     }
 
-    public String getCellData(Square cell) {
-        if (cell.getLine() < 'A' || cell.getLine() > 'A' + FIELD_SIZE) {
+    public String getSquareData(Square square) {
+        if (square.getLine() < 'A' || square.getLine() > 'A' + GRID_SIZE) {
             throw new IllegalArgumentException(
-                    "Wrong line identifier. Can be any character between 'A' and " + (char) ('A' + FIELD_SIZE));
-        } else if (cell.getColumn() < 1 || cell.getColumn() > FIELD_SIZE) {
+                    "Wrong line identifier. Can be any character between 'A' and " + (char) ('A' + GRID_SIZE));
+        } else if (square.getColumn() < 1 || square.getColumn() > GRID_SIZE) {
             throw new IllegalArgumentException(
-                    "Wrong column identifier [" + cell.getColumn() + "]. Can be any integer between 1 and " +
-                            FIELD_SIZE + " (inclusive)");
+                    "Wrong column identifier [" + square.getColumn() + "]. Can be any integer between 1 and " +
+                            GRID_SIZE + " (inclusive)");
         }
-        return getValueFromGrid(cell.getLineAsIndex(), cell.getColumnAsIndex());
+        return getValueFromGrid(square.getLineAsIndex(), square.getColumnAsIndex());
     }
 
     private String getValueFromGrid(int i, int j) {
         return grid[i][j].getData();
     }
 
+    private String getValueFromGrid(Square square) {
+        return this.getValueFromGrid(square.getLineAsIndex(), square.getColumnAsIndex());
+    }
+
     private void setValueInGrid(int i, int j, String value) {
         grid[i][j].setData(value);
     }
 
-    public GridModificationResult addShip(Square frontCell, Square rearCell, ShipType shipType) {
-        if (isCellNotOnTheField(frontCell) || isCellNotOnTheField(rearCell)) {
+    private void setValueInGrid(Square square, String value) {
+        this.setValueInGrid(square.getLineAsIndex(), square.getColumnAsIndex(), value);
+    }
+
+    private Square getSquareFromGrid(int i, int j) {
+        return grid[i][j];
+    }
+
+    public GridModificationResult addShip(Square frontSquare, Square rearSquare, ShipType shipType) {
+        if (isSquareNotOnTheGrid(frontSquare) || isSquareNotOnTheGrid(rearSquare)) {
             return GridModificationResult.SHIP_OUT_OF_GRID;
-        } else if (isToCloseToOtherShip(frontCell, rearCell)) {
+        } else if (isShipToCloseToOther(frontSquare, rearSquare)) {
             return GridModificationResult.SHIPS_TO_CLOSE;
         } else {
-            listOfShips.add(new Ship(shipType));
-            currentShip = listOfShips.get(listOfShips.size() - 1);
-            setShipCells(frontCell, rearCell);
-            numberOfSquaresOccupiedByShips += shipType.getSize();
+            registerShipOnGrid(shipType);
+            placeShip(frontSquare, rearSquare);
             return GridModificationResult.SHIP_PLACED;
         }
     }
 
+    private void registerShipOnGrid(ShipType shipType) {
+        listOfShips.add(new Ship(shipType));
+        currentShip = listOfShips.get(listOfShips.size() - 1);
+        numberOfSquaresOccupiedByShips += shipType.getSize();
+    }
+
+    private void placeShip(Square front, Square rear) {
+        List<Square> squaresToAlter = new ArrayList<>();
+        getShipSquares(squaresToAlter, front, rear);
+        setShipSquares(squaresToAlter);
+    }
+
+    private void getShipSquares(List<Square> listOfSquares, Square front, Square rear) {
+        switch (front.getDirectionTo(rear)) {
+            case LEFT -> getShipSquaresSameLine(listOfSquares, rear.getColumnAsIndex(), front.getColumnAsIndex(),
+                    front.getLineAsIndex());
+            case RIGHT -> getShipSquaresSameLine(listOfSquares, front.getColumnAsIndex(), rear.getColumnAsIndex(),
+                    front.getLineAsIndex());
+            case UP -> getShipSquaresSameColumn(listOfSquares, rear.getLineAsIndex(), front.getLineAsIndex(),
+                    front.getColumnAsIndex());
+            case DOWN -> getShipSquaresSameColumn(listOfSquares, front.getLineAsIndex(), rear.getLineAsIndex(),
+                    front.getColumnAsIndex());
+        }
+    }
+
+    private void getShipSquaresSameLine(List<Square> listOfSquares, int startColumn, int endColumn, int line) {
+        for (int i = startColumn; i <= endColumn; i++) {
+            listOfSquares.add(getSquareFromGrid(line, i));
+        }
+    }
+
+    private void getShipSquaresSameColumn(List<Square> listOfSquares, int startLine, int endLine, int column) {
+        for (int i = startLine; i <= endLine; i++) {
+            listOfSquares.add(getSquareFromGrid(i, column));
+        }
+    }
+
+    private void setShipSquares(List<Square> listOfSquares) {
+        for (Square square : listOfSquares) {
+            setSquare(square, SquareType.SHIP);
+            setReservedCells(square);
+        }
+    }
+
+    private void setReservedCells(Square square) {
+        int i = square.getLineAsIndex();
+        int j = square.getColumnAsIndex();
+        if (i - 1 >= 0 && j - 1 >= 0) {
+            setSquare(getSquareFromGrid(i - 1, j - 1), SquareType.RESERVED);
+            setSquare(getSquareFromGrid(i, j - 1), SquareType.RESERVED);
+            setSquare(getSquareFromGrid(i - 1, j), SquareType.RESERVED);
+        } else if (j - 1 >= 0) {
+            setSquare(getSquareFromGrid(i, j -1), SquareType.RESERVED);
+        } else if (i - 1 >= 0) {
+            setSquare(getSquareFromGrid(i - 1, j), SquareType.RESERVED);
+        }
+
+        if (i + 1 < GRID_SIZE && j + 1 < GRID_SIZE) {
+            setSquare(getSquareFromGrid(i + 1, j + 1), SquareType.RESERVED);
+            setSquare(getSquareFromGrid(i + 1, j), SquareType.RESERVED);
+            setSquare(getSquareFromGrid(i, j + 1), SquareType.RESERVED);
+        } else if (i + 1 < GRID_SIZE) {
+            setSquare(getSquareFromGrid(i + 1, j), SquareType.RESERVED);
+        } else if (j + 1 < GRID_SIZE) {
+            setSquare(getSquareFromGrid(i, j + 1), SquareType.RESERVED);
+        }
+
+        if (i + 1  < GRID_SIZE && j - 1 >= 0) {
+            setSquare(getSquareFromGrid(i + 1, j - 1), SquareType.RESERVED);
+        }
+        if (i - 1 >= 0 && j + 1 < GRID_SIZE) {
+            setSquare(getSquareFromGrid(i - 1, j + 1), SquareType.RESERVED);
+        }
+    }
+
+    private void setSquare(Square square, SquareType squareType) {
+        switch (squareType) {
+            case SHIP -> {
+                currentShip.addSquare(square);
+                setValueInGrid(square, SHIP);
+            }
+            case RESERVED -> {
+                if (!getValueFromGrid(square).equals(SHIP)) {
+                    setValueInGrid(square, RESERVED);
+                }
+            }
+            case SHOT -> {
+                String squareValue = getValueFromGrid(square);
+                switch (squareValue) {
+                    case SHIP -> {
+                        setValueInGrid(square, HIT);
+                        currentShip = getHittedShip(square);
+                        currentShip.destroySquare(square);
+                        numberOfSquaresOccupiedByShips--;
+                    }
+                    case HIT -> currentShip = getHittedShip(square);
+                    case FOG, RESERVED -> setValueInGrid(square, MISS_SHOT);
+                }
+            }
+        }
+    }
+
     public GridModificationResult registerShoot(Square shotCoordinates) {
-        if (isCellNotOnTheField(shotCoordinates)) {
+        if (isSquareNotOnTheGrid(shotCoordinates)) {
             return GridModificationResult.SHIP_OUT_OF_GRID;
         } else {
-            setCell(shotCoordinates, SquareType.SHOT);
-            if (getCellData(shotCoordinates).equals(HIT)) {
+            setSquare(shotCoordinates, SquareType.SHOT);
+            if (getSquareData(shotCoordinates).equals(HIT)) {
                 if (currentShip.isAlive()) {
                     return GridModificationResult.HIT_REGISTERED;
                 } else {
@@ -84,98 +196,10 @@ public class GameGrid {
         }
     }
 
-    public void setCell(Square shotCoordinates, SquareType cellType) {
-        setCell(shotCoordinates.getLineAsIndex(), shotCoordinates.getColumnAsIndex(), cellType);
-    }
-
-    private void setShipCells(Square frontCell, Square rearCell) {
-        int frontLine = frontCell.getLineAsIndex();
-        int rearLine = rearCell.getLineAsIndex();
-        if (frontLine == rearLine) {
-            setShipCells(frontLine, frontCell.getColumnAsIndex(), rearCell.getColumnAsIndex(), true);
-        } else {
-            setShipCells(frontCell.getColumnAsIndex(), frontLine, rearLine, false);
-        }
-    }
-
-    private void setShipCells(int constantCoordinate, int dynamicCoordinateStart, int dynamicCoordinateFinish,
-                                      boolean sameLine) {
-        int maxDynamic = Math.max(dynamicCoordinateStart, dynamicCoordinateFinish);
-        int minDynamic = Math.min(dynamicCoordinateStart, dynamicCoordinateFinish);
-        for (int i = minDynamic; i <= maxDynamic; i++) {
-            if (sameLine) {
-                setCell(constantCoordinate, i, SquareType.SHIP);
-                setReservedCells(constantCoordinate, i);
-            } else {
-                setCell(i, constantCoordinate, SquareType.SHIP);
-                setReservedCells(i, constantCoordinate);
-            }
-
-        }
-    }
-
-    private void setReservedCells(int i, int j) {
-        if (i - 1 >= 0 && j - 1 >= 0) {
-            setCell(i - 1, j - 1, SquareType.RESERVED);
-            setCell(i, j - 1, SquareType.RESERVED);
-            setCell(i - 1, j, SquareType.RESERVED);
-        } else if (j - 1 >= 0) {
-            setCell(i, j -1, SquareType.RESERVED);
-        } else if (i - 1 >= 0) {
-            setCell(i - 1, j, SquareType.RESERVED);
-        }
-
-        if (i + 1 < FIELD_SIZE && j + 1 < FIELD_SIZE) {
-            setCell(i + 1, j + 1, SquareType.RESERVED);
-            setCell(i + 1, j, SquareType.RESERVED);
-            setCell(i, j + 1, SquareType.RESERVED);
-        } else if (i + 1 < FIELD_SIZE) {
-            setCell(i + 1, j, SquareType.RESERVED);
-        } else if (j + 1 < FIELD_SIZE) {
-            setCell(i, j + 1, SquareType.RESERVED);
-        }
-
-        if (i + 1  < FIELD_SIZE && j - 1 >= 0) {
-            setCell(i + 1, j - 1, SquareType.RESERVED);
-        }
-        if (i - 1 >= 0 && j + 1 < FIELD_SIZE) {
-            setCell(i - 1, j + 1, SquareType.RESERVED);
-        }
-    }
-
-
-    private void setCell(int i, int j, SquareType cellType) {
-        switch (cellType) {
-            case SHIP -> {
-                currentShip.addCell(new Square(i, j));
-                setValueInGrid(i, j, SHIP);
-            }
-            case RESERVED -> {
-                if (!getValueFromGrid(i, j).equals(SHIP)) {
-                    setValueInGrid(i, j, RESERVED);
-                }
-            }
-            case SHOT -> {
-                String actualCellValue = getValueFromGrid(i, j);
-                switch (actualCellValue) {
-                    case SHIP -> {
-                        setValueInGrid(i, j, HIT);
-                        Square hitCell = new Square(i, j);
-                        currentShip = getHittedShip(hitCell);
-                        currentShip.destroyCell(hitCell);
-                        numberOfSquaresOccupiedByShips--;
-                    }
-                    case HIT -> currentShip = getHittedShip(new Square(i, j));
-                    case FOG, RESERVED -> setValueInGrid(i, j, MISS_SHOT);
-                }
-            }
-        }
-    }
-
     private Ship getHittedShip(Square square) {
         Ship currentShip = null;
         for (Ship ship : listOfShips) {
-            if (ship.containsCell(square)) {
+            if (ship.isOnSquare(square)) {
                 currentShip = ship;
                 break;
             }
@@ -183,49 +207,33 @@ public class GameGrid {
         return currentShip;
     }
 
-    private boolean isCellNotOnTheField(Square cell) {
-        return cell.getLineAsIndex() < 0
-                || cell.getLineAsIndex() >= FIELD_SIZE
-                || cell.getColumnAsIndex() < 0
-                || cell.getColumnAsIndex() >= FIELD_SIZE;
+    private boolean isSquareNotOnTheGrid(Square square) {
+        return square.getLineAsIndex() < 0
+                || square.getLineAsIndex() >= GRID_SIZE
+                || square.getColumnAsIndex() < 0
+                || square.getColumnAsIndex() >= GRID_SIZE;
     }
 
-    private boolean isToCloseToOtherShip(Square frontCell, Square rearCell) {
-        int frontLine = frontCell.getLineAsIndex();
-        int rearLine = rearCell.getLineAsIndex();
-        if (frontLine == rearLine) {
-            return isAnyCellReserved(frontLine, frontCell.getColumnAsIndex(), rearCell.getColumnAsIndex(), true);
-        } else {
-            return isAnyCellReserved(frontCell.getColumnAsIndex(), frontLine, rearLine, false);
-        }
-    }
-
-    private boolean isAnyCellReserved(int constantCoordinate, int dynamicFront, int dynamicRear, boolean sameLine) {
-        int minDynamic = Math.min(dynamicFront, dynamicRear);
-        int maxDynamic = Math.max(dynamicFront, dynamicRear);
-        for (int i = minDynamic; i <= maxDynamic; i++) {
-            if (sameLine) {
-                if (isCellReserved(constantCoordinate, i)) {
-                    return true;
-                }
-            } else {
-                if (isCellReserved(i, constantCoordinate)) {
-                    return true;
-                }
+    private boolean isShipToCloseToOther(Square frontSquare, Square rearSquare) {
+        List<Square> listOfShipsSquares = new ArrayList<>();
+        getShipSquares(listOfShipsSquares, frontSquare, rearSquare);
+        for (Square square : listOfShipsSquares) {
+            if (isSquareReserved(square)) {
+                return true;
             }
         }
         return false;
     }
 
-    private boolean isCellReserved(int i, int j) {
-        return getValueFromGrid(i, j).equals(RESERVED) || getValueFromGrid(i, j).equals(SHIP);
+    private boolean isSquareReserved(Square square) {
+        return getValueFromGrid(square).equals(RESERVED) || getValueFromGrid(square).equals(SHIP);
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < FIELD_SIZE; i++) {
-            stringBuilder.append(Arrays.toString(grid[i])).append(Constants.FieldPrinterConstants.NEW_LINE);
+        for (int i = 0; i < GRID_SIZE; i++) {
+            stringBuilder.append(Arrays.toString(grid[i])).append(Constants.GridPrinterConstants.NEW_LINE);
         }
         return stringBuilder.toString();
     }

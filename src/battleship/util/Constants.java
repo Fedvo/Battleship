@@ -1,13 +1,13 @@
 package battleship.util;
 
-import static battleship.util.Constants.FieldConstants.*;
+import static battleship.util.Constants.GridConstants.*;
 
 public final class Constants {
-    public static final class FieldConstants {
-        private FieldConstants() {
+    public static final class GridConstants {
+        private GridConstants() {
 
         }
-        public static final int FIELD_SIZE = 10;
+        public static final int GRID_SIZE = 10;
         public static final int COLUMN_INDEX_DIFFERENCE = 1;
         public static final int LINE_INDEX_DIFFERENCE = 65;
         public static final String FOG = "~";
@@ -17,16 +17,16 @@ public final class Constants {
         public static final String RESERVED = "R";
     }
 
-    public static final class FieldPrinterConstants {
-        private FieldPrinterConstants() {
+    public static final class GridPrinterConstants {
+        private GridPrinterConstants() {
 
         }
-        public static final String FIRST_CELL = "%s";
-        public static final String CELL = " %s";
+        public static final String FIRST_SQUARE = "%s";
+        public static final String SQUARE = " %s";
         public static final String NEW_LINE = System.lineSeparator();
         public static final String ALLY_FILTER_REGEX = "[" + RESERVED + "]";
         public static final String ENEMY_FILTER_REGEX = "[" + SHIP + RESERVED + "]";
         public static final String TRAINING_FILTER_REGEX = "[" + RESERVED + "]";
-        public static final String FIELDS_SEPARATOR = "---------------------";
+        public static final String GRIDS_SEPARATOR = "---------------------";
     }
 }

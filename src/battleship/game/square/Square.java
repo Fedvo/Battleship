@@ -5,7 +5,6 @@ import battleship.util.Constants;
 public class Square {
     private char line;
     private int column;
-
     private String data;
 
     public Square(char line, int column) {
@@ -14,8 +13,13 @@ public class Square {
     }
 
     public Square(int line, int column) {
-        this.line = (char) (line + Constants.FieldConstants.LINE_INDEX_DIFFERENCE);
-        this.column = column + Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE;
+        this.line = (char) (line + Constants.GridConstants.LINE_INDEX_DIFFERENCE);
+        this.column = column + Constants.GridConstants.COLUMN_INDEX_DIFFERENCE;
+    }
+
+    public Square(int line, int column, String data) {
+        this(line, column);
+        this.data = data;
     }
 
     public Square(String input) {
@@ -25,12 +29,12 @@ public class Square {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Input should have the following format: \"ab\", where " +
                     "\"a\" = any letter from 'A' to 'Z', and \"b\" any number from 1 to " +
-                    Constants.FieldConstants.FIELD_SIZE);
+                    Constants.GridConstants.GRID_SIZE);
         }
     }
 
     public Square() {
-        this.data = Constants.FieldConstants.FOG;
+        this.data = Constants.GridConstants.FOG;
     }
 
     public void setLine(char line) {
@@ -38,7 +42,7 @@ public class Square {
     }
 
     public void setLineFromIndex(int i) {
-        setLine((char) (i + Constants.FieldConstants.LINE_INDEX_DIFFERENCE));
+        setLine((char) (i + Constants.GridConstants.LINE_INDEX_DIFFERENCE));
     }
 
     public char getLine() {
@@ -46,7 +50,7 @@ public class Square {
     }
 
     public int getLineAsIndex() {
-        return this.line - Constants.FieldConstants.LINE_INDEX_DIFFERENCE;
+        return this.line - Constants.GridConstants.LINE_INDEX_DIFFERENCE;
     }
 
     public void setColumn(int column) {
@@ -54,7 +58,7 @@ public class Square {
     }
 
     public void setColumnFromIndex(int column) {
-        setColumn(column + Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE);
+        setColumn(column + Constants.GridConstants.COLUMN_INDEX_DIFFERENCE);
     }
 
     public int getColumn() {
@@ -62,7 +66,7 @@ public class Square {
     }
 
     public int getColumnAsIndex() {
-        return this.column - Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE;
+        return this.column - Constants.GridConstants.COLUMN_INDEX_DIFFERENCE;
     }
 
     public String getData() {
@@ -73,6 +77,38 @@ public class Square {
         this.data = data;
     }
 
+    public DirectionToSquare getDirectionTo(Square other) {
+        if (this.line == other.line && this.column == other.column) {
+            return DirectionToSquare.HERE;
+        } else if (this.line == other.line) {
+            if (this.column > other.column) {
+                return DirectionToSquare.LEFT;
+            } else {
+                return DirectionToSquare.RIGHT;
+            }
+        } else if (this.column == other.column) {
+            if (this.line > other.line) {
+                return DirectionToSquare.UP;
+            } else {
+                return DirectionToSquare.DOWN;
+            }
+        } else {
+            if (this.column > other.column) {
+                if (this.line > other.line) {
+                    return DirectionToSquare.LEFT_UP;
+                } else {
+                    return DirectionToSquare.LEFT_DOWN;
+                }
+            } else {
+                if (this.line > other.line) {
+                    return DirectionToSquare.RIGHT_UP;
+                } else {
+                    return DirectionToSquare.RIGHT_DOWN;
+                }
+            }
+        }
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Square other)) {
@@ -80,5 +116,10 @@ public class Square {
         } else {
             return this.line == other.line && this.column == other.column;
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.line + " " + this.column;
     }
 }

@@ -6,36 +6,36 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class Ship {
-    private final List<Square> listOfOccupiedCells = new ArrayList<>();
-    private final List<Square> listOfExistingCells = new ArrayList<>();
+    private final List<Square> listOfOccupiedSquares = new ArrayList<>();
+    private final List<Square> listOfSegments = new ArrayList<>();
 
-    private int numberOfExistingCells;
+    private int numberOfAliveSegments;
 
     private final ShipType shipType;
 
     public Ship(ShipType shipType) {
         this.shipType = shipType;
-        numberOfExistingCells = shipType.getSize();
+        numberOfAliveSegments = shipType.getSize();
     }
 
-    public void addCell(Square cell) {
-        listOfOccupiedCells.add(cell);
-        listOfExistingCells.add(cell);
+    public void addSquare(Square square) {
+        listOfOccupiedSquares.add(square);
+        listOfSegments.add(square);
     }
 
-    public void destroyCell(Square cell) {
-        if (listOfExistingCells.contains(cell)) {
-            listOfExistingCells.remove(cell);
-            numberOfExistingCells--;
+    public void destroySquare(Square square) {
+        if (listOfSegments.contains(square)) {
+            listOfSegments.remove(square);
+            numberOfAliveSegments--;
         }
     }
 
     public boolean isAlive() {
-        return numberOfExistingCells > 0;
+        return numberOfAliveSegments > 0;
     }
 
-    public boolean containsCell(Square cell) {
-        return listOfOccupiedCells.contains(cell);
+    public boolean isOnSquare(Square square) {
+        return listOfOccupiedSquares.contains(square);
     }
 
     @Override

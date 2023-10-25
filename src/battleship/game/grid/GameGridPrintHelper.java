@@ -2,13 +2,13 @@ package battleship.game.grid;
 
 import battleship.game.square.Square;
 
-import static battleship.util.Constants.FieldPrinterConstants.*;
-import static battleship.util.Constants.FieldConstants.*;
+import static battleship.util.Constants.GridPrinterConstants.*;
+import static battleship.util.Constants.GridConstants.*;
 
 public class GameGridPrintHelper {
     public static void printPVPView(GameGrid enemyField, GameGrid playersField) {
         printEnemyFieldView(enemyField);
-        System.out.println(FIELDS_SEPARATOR);
+        System.out.println(GRIDS_SEPARATOR);
         printAllyFieldView(playersField);
     }
     public static void printAllyFieldView(GameGrid field) {
@@ -26,10 +26,10 @@ public class GameGridPrintHelper {
     private static String generateGlobalFieldView(GameGrid field) {
         StringBuilder stringBuilder = new StringBuilder(generateColumnNumbersString());
         char lineIdentifier = 'A';
-        for (int i = 0; i < FIELD_SIZE; i++) {
-            stringBuilder.append(FIRST_CELL.formatted(lineIdentifier));
-            for (int j = 0; j < FIELD_SIZE; j++) {
-                stringBuilder.append(CELL.formatted(field.getCellData(
+        for (int i = 0; i < GRID_SIZE; i++) {
+            stringBuilder.append(FIRST_SQUARE.formatted(lineIdentifier));
+            for (int j = 0; j < GRID_SIZE; j++) {
+                stringBuilder.append(SQUARE.formatted(field.getSquareData(
                         new Square(lineIdentifier, j + 1))));
             }
             stringBuilder.append(NEW_LINE);
@@ -39,9 +39,9 @@ public class GameGridPrintHelper {
     }
 
     private static String generateColumnNumbersString() {
-        StringBuilder stringBuilder = new StringBuilder(FIRST_CELL.formatted(" "));
-        for (int i = 1; i <= FIELD_SIZE; i++) {
-            stringBuilder.append(CELL.formatted(i));
+        StringBuilder stringBuilder = new StringBuilder(FIRST_SQUARE.formatted(" "));
+        for (int i = 1; i <= GRID_SIZE; i++) {
+            stringBuilder.append(SQUARE.formatted(i));
         }
         return stringBuilder.append(NEW_LINE).toString();
     }

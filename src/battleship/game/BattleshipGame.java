@@ -1,9 +1,6 @@
 package battleship.game;
 
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import battleship.game.square.Square;
 import battleship.game.grid.GameGrid;
@@ -22,16 +19,16 @@ public class BattleshipGame {
         VALID
     }
     private final Scanner scanner = new Scanner(System.in);
-    private final GameGrid fieldPlayer1;
-    private final GameGrid fieldPlayer2;
+    private final GameGrid gridPlayer1;
+    private final GameGrid gridPlayer2;
 
     public BattleshipGame() {
-        fieldPlayer1 = new GameGrid();
-        fieldPlayer2 = new GameGrid();
+        gridPlayer1 = new GameGrid();
+        gridPlayer2 = new GameGrid();
     }
     public void play() {
         System.out.println(PLAYER_1_PLANNING_STAGE);
-        placeShips(fieldPlayer1);
+        placeShips(gridPlayer1);
 
         System.out.println();
         System.out.println(NEXT_PLAYER_MOVE);
@@ -39,7 +36,7 @@ public class BattleshipGame {
         scanner.nextLine();
 
         System.out.println(PLAYER_2_PLANNING_STAGE);
-        placeShips(fieldPlayer2);
+        placeShips(gridPlayer2);
 
         System.out.println();
         System.out.println(NEXT_PLAYER_MOVE);
@@ -53,9 +50,9 @@ public class BattleshipGame {
 
         while (true) {
             System.out.println();
-            GameGridPrintHelper.printPVPView(fieldPlayer2, fieldPlayer1);
+            GameGridPrintHelper.printPVPView(gridPlayer2, gridPlayer1);
 
-            if (isLastTakenShot(fieldPlayer2)) {
+            if (isLastTakenShot(gridPlayer2)) {
                 break;
             }
 
@@ -65,9 +62,9 @@ public class BattleshipGame {
             scanner.nextLine();
 
             System.out.println();
-            GameGridPrintHelper.printPVPView(fieldPlayer1, fieldPlayer2);
+            GameGridPrintHelper.printPVPView(gridPlayer1, gridPlayer2);
 
-            if (isLastTakenShot(fieldPlayer1)) {
+            if (isLastTakenShot(gridPlayer1)) {
                 break;
             }
 
@@ -81,21 +78,19 @@ public class BattleshipGame {
         System.out.println(YOU_SANK_LAST_SHIP);
     }
 
-    private boolean isLastTakenShot(GameGrid field) {
+    private boolean isLastTakenShot(GameGrid grid) {
         main_loop:
         while (true) {
             String userInput = readUsersInputFromConsole();
             InputValidationState inputValidationResult = validateUserInputShoot(userInput);
             if (inputValidationResult != InputValidationState.VALID) {
-                switch (inputValidationResult) {
-                    case WRONG_FORMAT -> {}
-                }
+                Objects.requireNonNull(inputValidationResult);
             } else {
                 Square shootCoordinates = new Square(userInput);
-                GridModificationResult result = field.registerShoot(shootCoordinates);
+                GridModificationResult result = grid.registerShoot(shootCoordinates);
 
                 System.out.println();
-                GameGridPrintHelper.printEnemyFieldView(field);
+                GameGridPrintHelper.printEnemyFieldView(grid);
 
                 switch(result) {
                     case SHIP_OUT_OF_GRID -> {
@@ -127,9 +122,9 @@ public class BattleshipGame {
         return false;
     }
 
-    private void placeShips(GameGrid field) {
+    private void placeShips(GameGrid grid) {
         System.out.println();
-        GameGridPrintHelper.printEnemyFieldView(field);
+        GameGridPrintHelper.printEnemyFieldView(grid);
 
         for (ShipType shipType : ShipType.values()) {
             switch (shipType) {
@@ -154,14 +149,14 @@ public class BattleshipGame {
                     System.out.println(PLACE_DESTROYER);
                 }
             }
-            placeShip(shipType, field);
+            placeShip(shipType, grid);
 
             System.out.println();
-            GameGridPrintHelper.printAllyFieldView(field);
+            GameGridPrintHelper.printAllyFieldView(grid);
         }
     }
 
-    private void placeShip(ShipType shipType, GameGrid field) {
+    private void placeShip(ShipType shipType, GameGrid grid) {
         main_loop:
         while (true) {
             String userRawInput = readUsersInputFromConsole();
@@ -173,17 +168,16 @@ public class BattleshipGame {
                         System.out.println();
                         System.out.println(WRONG_SHIP_LOCATION);
                     }
-                    case WRONG_FORMAT -> {}
-                    case WRONG_SIZE -> {}
+                    case WRONG_FORMAT, WRONG_SIZE -> {}
                 }
             } else {
-                Square frontCell = new Square(userProvidedCoordinates.get(0));
-                Square rearCell = new Square(userProvidedCoordinates.get(1));
-                if (!isShipOfCorrectSize(getShipSizeFromCoordinates(frontCell, rearCell), shipType)) {
+                Square frontSquare = new Square(userProvidedCoordinates.get(0));
+                Square rearSquare = new Square(userProvidedCoordinates.get(1));
+                if (!isShipOfCorrectSize(getShipSizeFromCoordinates(frontSquare, rearSquare), shipType)) {
                     System.out.println();
                     System.out.printf((WRONG_SHIP_SIZE) + "%n", shipType.getName());
                 } else {
-                    switch(field.addShip(frontCell, rearCell, shipType)) {
+                    switch(grid.addShip(frontSquare, rearSquare, shipType)) {
                         case SHIP_OUT_OF_GRID -> {
                             System.out.println();
                             System.out.println(WRONG_SHIP_LOCATION);
@@ -231,20 +225,22 @@ public class BattleshipGame {
         } else if (isNotValidCoordinateFormat(userProvidedCoordinates.get(0))
                 || isNotValidCoordinateFormat(userProvidedCoordinates.get(1))) {
             return InputValidationState.WRONG_FORMAT;
-        } else if (!isTheSameLineIdentifier(userProvidedCoordinates)
-                && !isTheSameColumnIdentifier(userProvidedCoordinates)) {
+        } else if (isDiagonal(userProvidedCoordinates)) {
             return InputValidationState.NOT_SAME_LANE_OR_COLUMN;
         } else {
             return InputValidationState.VALID;
         }
     }
 
-    private boolean isTheSameLineIdentifier(List<String> coordinates) {
-        return coordinates.get(0).charAt(0) == coordinates.get(1).charAt(0);
-    }
-
-    private boolean isTheSameColumnIdentifier(List<String> coordinates) {
-        return coordinates.get(0).substring(1).equals(coordinates.get(1).substring(1));
+    private boolean isDiagonal(List<String> coordinates) {
+        switch (new Square(coordinates.get(0)).getDirectionTo(new Square(coordinates.get(1)))) {
+            case LEFT_DOWN, LEFT_UP, RIGHT_DOWN, RIGHT_UP -> {
+                return true;
+            }
+            default -> {
+                return false;
+            }
+        }
     }
 
     private boolean isNotValidCoordinateFormat(String coordinate) {
