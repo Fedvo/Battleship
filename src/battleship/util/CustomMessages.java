@@ -12,8 +12,15 @@ public class CustomMessages {
         public static final String PLACE_DESTROYER = "Enter the coordinates of the Destroyer (2 cells):";
         public static final String THE_GAME_STARTS = "The game starts!";
         public static final String TAKE_A_SHOT = "Take a shot!";
-        public static final String YOU_MISSED = "You missed!";
-        public static final String YOU_HIT_A_SHIP = "You hit a ship!";
+        public static final String YOU_MISSED = "You missed. Try again:";
+        public static final String YOU_HIT_A_SHIP = "You hit a ship! Try again:";
+        public static final String YOU_SANK_A_SHIP = "You sank a ship! Specify a new target:";
+        public static final String YOU_SANK_LAST_SHIP = "You sank the last ship. You won. Congratulations!";
+        public static final String PLAYER_1_PLANNING_STAGE = "Player 1, place your ships on the game field";
+        public static final String PLAYER_2_PLANNING_STAGE = "Player 2, place your ships on the game field";
+        public static final String NEXT_PLAYER_MOVE = "Press Enter and pass the move to another player";
+        public static final String PLAYER_1_TURN = "Player 1, it's your turn:";
+        public static final String PLAYER_2_TURN = "Player 2, it's your turn:";
     }
 
     public static final class GamePlayErrorMessage {

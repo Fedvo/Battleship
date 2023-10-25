@@ -50,4 +50,13 @@ public class GameCell {
     public int getColumnIndex() {
         return this.column - Constants.FieldConstants.COLUMN_INDEX_DIFFERENCE;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof GameCell other)) {
+            return false;
+        } else {
+            return this.line == other.line && this.column == other.column;
+        }
+    }
 }

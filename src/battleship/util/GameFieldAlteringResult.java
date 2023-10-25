@@ -5,5 +5,7 @@ public enum GameFieldAlteringResult {
     TOO_CLOSE,
     ALTERED,
     HIT,
-    MISS
+    MISS,
+    YOU_WON,
+    SANK_A_SHIP
 }

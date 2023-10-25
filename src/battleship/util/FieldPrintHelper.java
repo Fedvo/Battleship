@@ -7,6 +7,11 @@ import static battleship.util.Constants.FieldPrinterConstants.*;
 import static battleship.util.Constants.FieldConstants.*;
 
 public class FieldPrintHelper {
+    public static void printPVPView(GameField enemyField, GameField playersField) {
+        printEnemyFieldView(enemyField);
+        System.out.println(FIELDS_SEPARATOR);
+        printAllyFieldView(playersField);
+    }
     public static void printAllyFieldView(GameField field) {
         System.out.println(generateGlobalFieldView((field)).replaceAll(ALLY_FILTER_REGEX, FOG));
     }
@@ -19,9 +24,6 @@ public class FieldPrintHelper {
         System.out.println(generateGlobalFieldView((field)));
     }
 
-    public static void printTrainingFieldView(GameField field) {
-        System.out.println(generateGlobalFieldView(field).replaceAll(TRAINING_FILTER_REGEX, FOG));
-    }
     private static String generateGlobalFieldView(GameField field) {
         StringBuilder stringBuilder = new StringBuilder(generateColumnNumbersString());
         char lineIdentifier = 'A';

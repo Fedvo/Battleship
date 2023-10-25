@@ -24,8 +24,9 @@ public final class Constants {
         public static final String FIRST_CELL = "%s";
         public static final String CELL = " %s";
         public static final String NEW_LINE = System.lineSeparator();
-        public static final String ALLY_FILTER_REGEX = "[" + MISS_SHOT + HIT + RESERVED + "]";
+        public static final String ALLY_FILTER_REGEX = "[" + RESERVED + "]";
         public static final String ENEMY_FILTER_REGEX = "[" + SHIP + RESERVED + "]";
         public static final String TRAINING_FILTER_REGEX = "[" + RESERVED + "]";
+        public static final String FIELDS_SEPARATOR = "---------------------";
     }
 }

@@ -9,12 +9,14 @@ import static battleship.util.Constants.FieldConstants.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
-import java.util.Objects;
 
 public class GameField {
     private final List<List<String>> field = new ArrayList<>();
+    private final List<Ship> listOfShips = new ArrayList<>();
 
     private int numberOfAliveShipCells = 0;
+
+    private Ship currentShip;
 
     public GameField() {
         populateInitialField();
@@ -38,13 +40,15 @@ public class GameField {
         return field.get(cell.getLineIndex()).get(cell.getColumnIndex());
     }
 
-    public GameFieldAlteringResult addShip(GameCell frontCell, GameCell rearCell) {
+    public GameFieldAlteringResult addShip(GameCell frontCell, GameCell rearCell, ShipType shipType) {
         if (isCellNotOnTheField(frontCell) || isCellNotOnTheField(rearCell)) {
             return GameFieldAlteringResult.OUT_OF_FIELD;
         } else if (isToCloseToOtherShip(frontCell, rearCell)) {
             return GameFieldAlteringResult.TOO_CLOSE;
         } else {
-            setCells(frontCell, rearCell);
+            listOfShips.add(new Ship(shipType));
+            currentShip = listOfShips.get(listOfShips.size() - 1);
+            setShipCells(frontCell, rearCell);
             return GameFieldAlteringResult.ALTERED;
         }
     }
@@ -54,9 +58,18 @@ public class GameField {
             return GameFieldAlteringResult.OUT_OF_FIELD;
         } else {
             setCell(shotCoordinates, CellType.SHOT);
-            return getCellData(shotCoordinates).equals(HIT)
-                    ? GameFieldAlteringResult.HIT
-                    : GameFieldAlteringResult.MISS;
+            if (getCellData(shotCoordinates).equals(HIT)) {
+                if (currentShip.isAlive()) {
+                    return GameFieldAlteringResult.HIT;
+                } else {
+                    if (!field.toString().contains(SHIP)) {
+                        return GameFieldAlteringResult.YOU_WON;
+                    } else {
+                        return GameFieldAlteringResult.SANK_A_SHIP;
+                    }
+                }
+            }
+            return GameFieldAlteringResult.MISS;
         }
     }
 
@@ -64,7 +77,7 @@ public class GameField {
         setCell(shotCoordinates.getLineIndex(), shotCoordinates.getColumnIndex(), cellType);
     }
 
-    private void setCells(GameCell frontCell, GameCell rearCell) {
+    private void setShipCells(GameCell frontCell, GameCell rearCell) {
         int frontLine = frontCell.getLineIndex();
         int rearLine = rearCell.getLineIndex();
         if (frontLine == rearLine) {
@@ -123,6 +136,7 @@ public class GameField {
     private void setCell(int i, int j, CellType cellType) {
         switch (cellType) {
             case SHIP -> {
+                currentShip.addCell(new GameCell(i, j));
                 field.get(i).set(j, SHIP);
                 numberOfAliveShipCells ++;
             }
@@ -133,13 +147,27 @@ public class GameField {
             }
             case SHOT -> {
                 String actualCellValue = field.get(i).get(j);
-                if (actualCellValue.equals(SHIP)) {
+                if (actualCellValue.equals(SHIP) || actualCellValue.equals(HIT)) {
                     field.get(i).set(j, HIT);
+                    GameCell hitCell = new GameCell(i, j);
+                    currentShip = getHittedShip(hitCell);
+                    currentShip.destroyCell(hitCell);
                 } else if (actualCellValue.equals(FOG) || actualCellValue.equals(RESERVED)) {
                     field.get(i).set(j, MISS_SHOT);
                 }
             }
         }
+    }
+
+    private Ship getHittedShip(GameCell gameCell) {
+        Ship currentShip = null;
+        for (Ship ship : listOfShips) {
+            if (ship.containsCell(gameCell)) {
+                currentShip = ship;
+                break;
+            }
+        }
+        return currentShip;
     }
 
     private boolean isCellNotOnTheField(GameCell cell) {

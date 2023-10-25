@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import battleship.util.FieldPrintHelper;
+import battleship.util.GameFieldAlteringResult;
 
 import static battleship.util.CustomMessages.GamePlayMessage.*;
 import static battleship.util.CustomMessages.GamePlayErrorMessage.*;
@@ -18,34 +19,68 @@ public class BattleshipGame {
         VALID
     }
     private final Scanner scanner = new Scanner(System.in);
-    private final GameField field;
+    private final GameField fieldPlayer1;
+    private final GameField fieldPlayer2;
 
     public BattleshipGame() {
-        field = new GameField();
+        fieldPlayer1 = new GameField();
+        fieldPlayer2 = new GameField();
     }
     public void play() {
-        FieldPrintHelper.printEnemyFieldView(field);
-        placeShips();
+        System.out.println(PLAYER_1_PLANNING_STAGE);
+        placeShips(fieldPlayer1);
 
         System.out.println();
-        System.out.println(THE_GAME_STARTS);
+        System.out.println(NEXT_PLAYER_MOVE);
+        System.out.print("...");
+        scanner.nextLine();
+
+        System.out.println(PLAYER_2_PLANNING_STAGE);
+        placeShips(fieldPlayer2);
 
         System.out.println();
-        FieldPrintHelper.printEnemyFieldView(field);
+        System.out.println(NEXT_PLAYER_MOVE);
+        System.out.print("...");
+        scanner.nextLine();
 
         takeShoots();
-        FieldPrintHelper.printTrainingFieldView(field);
     }
 
     private void takeShoots() {
-        takeShoot();
-    }
 
-    private void takeShoot() {
-        main_loop:
         while (true) {
             System.out.println();
-            System.out.println(TAKE_A_SHOT);
+            FieldPrintHelper.printPVPView(fieldPlayer2, fieldPlayer1);
+
+            if (isLastTakenShot(fieldPlayer2)) {
+                break;
+            }
+
+            System.out.println();
+            System.out.println(NEXT_PLAYER_MOVE);
+            System.out.print("...");
+            scanner.nextLine();
+
+            System.out.println();
+            FieldPrintHelper.printPVPView(fieldPlayer1, fieldPlayer2);
+
+            if (isLastTakenShot(fieldPlayer1)) {
+                break;
+            }
+
+            System.out.println();
+            System.out.println(NEXT_PLAYER_MOVE);
+            System.out.print("...");
+            scanner.nextLine();
+        }
+
+        System.out.println();
+        System.out.println(YOU_SANK_LAST_SHIP);
+    }
+
+    private boolean isLastTakenShot(GameField field) {
+        main_loop:
+        while (true) {
             String userInput = readUsersInputFromConsole();
             InputValidationState inputValidationResult = validateUserInputShoot(userInput);
             if (inputValidationResult != InputValidationState.VALID) {
@@ -54,7 +89,12 @@ public class BattleshipGame {
                 }
             } else {
                 GameCell shootCoordinates = new GameCell(userInput);
-                switch(field.registerShoot(shootCoordinates)) {
+                GameFieldAlteringResult result = field.registerShoot(shootCoordinates);
+
+                System.out.println();
+                FieldPrintHelper.printEnemyFieldView(field);
+
+                switch(result) {
                     case OUT_OF_FIELD -> {
                         System.out.println();
                         System.out.println(WRONG_COORDINATES);
@@ -69,12 +109,25 @@ public class BattleshipGame {
                         System.out.println(YOU_MISSED);
                         break main_loop;
                     }
+                    case SANK_A_SHIP -> {
+                        System.out.println();
+                        System.out.println(YOU_SANK_A_SHIP);
+                        break main_loop;
+                    }
+                    case YOU_WON -> {
+                        return true;
+                    }
                 }
             }
         }
+
+        return false;
     }
 
-    private void placeShips() {
+    private void placeShips(GameField field) {
+        System.out.println();
+        FieldPrintHelper.printEnemyFieldView(field);
+
         for (ShipType shipType : ShipType.values()) {
             switch (shipType) {
                 case AIRCRAFT_CARRIER -> {
@@ -98,14 +151,14 @@ public class BattleshipGame {
                     System.out.println(PLACE_DESTROYER);
                 }
             }
-            placeShip(shipType);
+            placeShip(shipType, field);
 
             System.out.println();
             FieldPrintHelper.printAllyFieldView(field);
         }
     }
 
-    private void placeShip(ShipType shipType) {
+    private void placeShip(ShipType shipType, GameField field) {
         main_loop:
         while (true) {
             String userRawInput = readUsersInputFromConsole();
@@ -127,7 +180,7 @@ public class BattleshipGame {
                     System.out.println();
                     System.out.printf((WRONG_SHIP_SIZE) + "%n", shipType.getName());
                 } else {
-                    switch(field.addShip(frontCell, rearCell)) {
+                    switch(field.addShip(frontCell, rearCell, shipType)) {
                         case OUT_OF_FIELD -> {
                             System.out.println();
                             System.out.println(WRONG_SHIP_LOCATION);
