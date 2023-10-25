@@ -9,15 +9,14 @@ import battleship.game.square.SquareType;
 import static battleship.util.Constants.FieldConstants.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 public class GameGrid {
-    private final List<List<String>> grid = new ArrayList<>();
+    private final String[][] grid = new String[FIELD_SIZE][FIELD_SIZE];
     private final List<Ship> listOfShips = new ArrayList<>();
     private Ship currentShip;
-
-    int numberOfSquaresOccupiedByShips = 0;
+    private int numberOfSquaresOccupiedByShips = 0;
 
     public GameGrid() {
         populateInitialField();
@@ -25,7 +24,7 @@ public class GameGrid {
 
     private void populateInitialField() {
         for (int i = 0; i < FIELD_SIZE; i++) {
-            grid.add(new ArrayList<>(Arrays.asList(FOG.repeat(FIELD_SIZE).split(""))));
+            grid[i] = FOG.repeat(FIELD_SIZE).split("");
         }
     }
 
@@ -38,7 +37,15 @@ public class GameGrid {
                     "Wrong column identifier [" + cell.getColumn() + "]. Can be any integer between 1 and " +
                             FIELD_SIZE + " (inclusive)");
         }
-        return grid.get(cell.getLineIndex()).get(cell.getColumnIndex());
+        return getValueFromGrid(cell.getLineIndex(), cell.getColumnIndex());
+    }
+
+    private String getValueFromGrid(int i, int j) {
+        return grid[i][j];
+    }
+
+    private void setValueInGrid(int i, int j, String value) {
+        grid[i][j] = value;
     }
 
     public GridModificationResult addShip(Square frontCell, Square rearCell, ShipType shipType) {
@@ -139,25 +146,25 @@ public class GameGrid {
         switch (cellType) {
             case SHIP -> {
                 currentShip.addCell(new Square(i, j));
-                grid.get(i).set(j, SHIP);
+                setValueInGrid(i, j, SHIP);
             }
             case RESERVED -> {
-                if (!grid.get(i).get(j).equals(SHIP)) {
-                    grid.get(i).set(j, RESERVED);
+                if (!getValueFromGrid(i, j).equals(SHIP)) {
+                    setValueInGrid(i, j, RESERVED);
                 }
             }
             case SHOT -> {
-                String actualCellValue = grid.get(i).get(j);
+                String actualCellValue = getValueFromGrid(i, j);
                 switch (actualCellValue) {
                     case SHIP -> {
-                        grid.get(i).set(j, HIT);
+                        setValueInGrid(i, j, HIT);
                         Square hitCell = new Square(i, j);
                         currentShip = getHittedShip(hitCell);
                         currentShip.destroyCell(hitCell);
                         numberOfSquaresOccupiedByShips--;
                     }
                     case HIT -> currentShip = getHittedShip(new Square(i, j));
-                    case FOG, RESERVED -> grid.get(i).set(j, MISS_SHOT);
+                    case FOG, RESERVED -> setValueInGrid(i, j, MISS_SHOT);
                 }
             }
         }
@@ -209,14 +216,14 @@ public class GameGrid {
     }
 
     private boolean isCellReserved(int i, int j) {
-        return grid.get(i).get(j).equals(RESERVED) || grid.get(i).get(j).equals(SHIP);
+        return getValueFromGrid(i, j).equals(RESERVED) || getValueFromGrid(i, j).equals(SHIP);
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < FIELD_SIZE; i++) {
-            stringBuilder.append(grid.get(i).toString()).append(Constants.FieldPrinterConstants.NEW_LINE);
+            stringBuilder.append(Arrays.toString(grid[i])).append(Constants.FieldPrinterConstants.NEW_LINE);
         }
         return stringBuilder.toString();
     }
