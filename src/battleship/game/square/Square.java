@@ -13,8 +13,8 @@ public class Square {
     }
 
     public Square(int line, int column) {
-        this.line = (char) (line + Constants.GridConstants.LINE_INDEX_DIFFERENCE);
-        this.column = column + Constants.GridConstants.COLUMN_INDEX_DIFFERENCE;
+        this.line = (char) (line + Constants.GameGridConstants.LINE_INDEX_DIFFERENCE);
+        this.column = column + Constants.GameGridConstants.COLUMN_INDEX_DIFFERENCE;
     }
 
     public Square(int line, int column, String data) {
@@ -29,12 +29,12 @@ public class Square {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Input should have the following format: \"ab\", where " +
                     "\"a\" = any letter from 'A' to 'Z', and \"b\" any number from 1 to " +
-                    Constants.GridConstants.GRID_SIZE);
+                    Constants.GameGridConstants.GRID_SIZE);
         }
     }
 
     public Square() {
-        this.data = Constants.GridConstants.FOG;
+        this.data = Constants.GameGridConstants.FOG;
     }
 
     public void setLine(char line) {
@@ -42,7 +42,7 @@ public class Square {
     }
 
     public void setLineFromIndex(int i) {
-        setLine((char) (i + Constants.GridConstants.LINE_INDEX_DIFFERENCE));
+        setLine((char) (i + Constants.GameGridConstants.LINE_INDEX_DIFFERENCE));
     }
 
     public char getLine() {
@@ -50,7 +50,7 @@ public class Square {
     }
 
     public int getLineAsIndex() {
-        return this.line - Constants.GridConstants.LINE_INDEX_DIFFERENCE;
+        return this.line - Constants.GameGridConstants.LINE_INDEX_DIFFERENCE;
     }
 
     public void setColumn(int column) {
@@ -58,7 +58,7 @@ public class Square {
     }
 
     public void setColumnFromIndex(int column) {
-        setColumn(column + Constants.GridConstants.COLUMN_INDEX_DIFFERENCE);
+        setColumn(column + Constants.GameGridConstants.COLUMN_INDEX_DIFFERENCE);
     }
 
     public int getColumn() {
@@ -66,7 +66,7 @@ public class Square {
     }
 
     public int getColumnAsIndex() {
-        return this.column - Constants.GridConstants.COLUMN_INDEX_DIFFERENCE;
+        return this.column - Constants.GameGridConstants.COLUMN_INDEX_DIFFERENCE;
     }
 
     public String getData() {

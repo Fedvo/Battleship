@@ -6,7 +6,7 @@ import battleship.game.ship.ShipType;
 import battleship.util.Constants;
 import battleship.game.square.SquareType;
 
-import static battleship.util.Constants.GridConstants.*;
+import static battleship.util.Constants.GameGridConstants.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +64,7 @@ public class GameGrid {
 
     public GridModificationResult addShip(Square frontSquare, Square rearSquare, ShipType shipType) {
         if (isSquareNotOnTheGrid(frontSquare) || isSquareNotOnTheGrid(rearSquare)) {
-            return GridModificationResult.SHIP_OUT_OF_GRID;
+            return GridModificationResult.OUT_OF_GAME_GRID;
         } else if (isShipToCloseToOther(frontSquare, rearSquare)) {
             return GridModificationResult.SHIPS_TO_CLOSE;
         } else {
@@ -178,7 +178,7 @@ public class GameGrid {
 
     public GridModificationResult registerShoot(Square shotCoordinates) {
         if (isSquareNotOnTheGrid(shotCoordinates)) {
-            return GridModificationResult.SHIP_OUT_OF_GRID;
+            return GridModificationResult.OUT_OF_GAME_GRID;
         } else {
             setSquare(shotCoordinates, SquareType.SHOT);
             if (getSquareData(shotCoordinates).equals(HIT)) {
@@ -233,7 +233,7 @@ public class GameGrid {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < GRID_SIZE; i++) {
-            stringBuilder.append(Arrays.toString(grid[i])).append(Constants.GridPrinterConstants.NEW_LINE);
+            stringBuilder.append(Arrays.toString(grid[i])).append(Constants.GameGridPrinterConstants.NEW_LINE);
         }
         return stringBuilder.toString();
     }

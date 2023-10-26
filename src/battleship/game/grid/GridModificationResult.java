@@ -1,7 +1,7 @@
 package battleship.game.grid;
 
 public enum GridModificationResult {
-    SHIP_OUT_OF_GRID,
+    OUT_OF_GAME_GRID,
     SHIPS_TO_CLOSE,
     SHIP_SANK,
     SHIP_PLACED,

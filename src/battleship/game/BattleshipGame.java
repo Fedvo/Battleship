@@ -2,12 +2,13 @@ package battleship.game;
 
 import java.util.*;
 
+import battleship.game.grid.printer.GameGridViewPerspective;
 import battleship.game.square.Square;
 import battleship.game.grid.GameGrid;
-import battleship.game.grid.GameGridPrintHelper;
 import battleship.game.ship.ShipType;
 import battleship.game.grid.GridModificationResult;
 
+import static battleship.game.printer.BattleshipGamePrintHelper.*;
 import static battleship.util.CustomMessages.GamePlayMessage.*;
 import static battleship.util.CustomMessages.GamePlayErrorMessage.*;
 
@@ -21,176 +22,164 @@ public class BattleshipGame {
     private final Scanner scanner = new Scanner(System.in);
     private final GameGrid gridPlayer1;
     private final GameGrid gridPlayer2;
+    private boolean isAWinner = false;
 
     public BattleshipGame() {
         gridPlayer1 = new GameGrid();
         gridPlayer2 = new GameGrid();
     }
     public void play() {
-        System.out.println(PLAYER_1_PLANNING_STAGE);
+        notifyNPlayerPlanningStage(1);
         placeShips(gridPlayer1);
+        beginNextPlayerMove();
 
-        System.out.println();
-        System.out.println(NEXT_PLAYER_MOVE);
-        System.out.print("...");
-        scanner.nextLine();
-
-        System.out.println(PLAYER_2_PLANNING_STAGE);
+        notifyNPlayerPlanningStage(2);
         placeShips(gridPlayer2);
-
-        System.out.println();
-        System.out.println(NEXT_PLAYER_MOVE);
-        System.out.print("...");
-        scanner.nextLine();
+        beginNextPlayerMove();
 
         takeShoots();
     }
 
+    private void beginNextPlayerMove() {
+        notifyNextPlayerMove();
+        scanner.nextLine();
+    }
+
     private void takeShoots() {
-
         while (true) {
-            System.out.println();
-            GameGridPrintHelper.printPVPView(gridPlayer2, gridPlayer1);
-
+            printPVPGameGridView(gridPlayer2, gridPlayer1);
             if (isLastTakenShot(gridPlayer2)) {
                 break;
             }
+            beginNextPlayerMove();
 
-            System.out.println();
-            System.out.println(NEXT_PLAYER_MOVE);
-            System.out.print("...");
-            scanner.nextLine();
-
-            System.out.println();
-            GameGridPrintHelper.printPVPView(gridPlayer1, gridPlayer2);
-
+            printPVPGameGridView(gridPlayer1, gridPlayer2);
             if (isLastTakenShot(gridPlayer1)) {
                 break;
             }
-
-            System.out.println();
-            System.out.println(NEXT_PLAYER_MOVE);
-            System.out.print("...");
-            scanner.nextLine();
+            beginNextPlayerMove();
         }
-
-        System.out.println();
-        System.out.println(YOU_SANK_LAST_SHIP);
+        notifyLastShipSinking();
     }
 
     private boolean isLastTakenShot(GameGrid grid) {
-        main_loop:
         while (true) {
             String userInput = readUsersInputFromConsole();
-            InputValidationState inputValidationResult = validateUserInputShoot(userInput);
-            if (inputValidationResult != InputValidationState.VALID) {
-                Objects.requireNonNull(inputValidationResult);
-            } else {
+            if (validateShotInput(userInput)) {
                 Square shootCoordinates = new Square(userInput);
                 GridModificationResult result = grid.registerShoot(shootCoordinates);
-
-                System.out.println();
-                GameGridPrintHelper.printEnemyFieldView(grid);
-
-                switch(result) {
-                    case SHIP_OUT_OF_GRID -> {
-                        System.out.println();
-                        System.out.println(WRONG_COORDINATES);
-                    }
-                    case HIT_REGISTERED -> {
-                        System.out.println();
-                        System.out.println(YOU_HIT_A_SHIP);
-                        break main_loop;
-                    }
-                    case MISS_REGISTERED -> {
-                        System.out.println();
-                        System.out.println(YOU_MISSED);
-                        break main_loop;
-                    }
-                    case SHIP_SANK -> {
-                        System.out.println();
-                        System.out.println(YOU_SANK_A_SHIP);
-                        break main_loop;
-                    }
-                    case WINNER -> {
+                printGameGridView(grid, GameGridViewPerspective.ENEMY_PERSPECTIVE);
+                if (isGoodShotResult(result)) {
+                    if (isAWinner) {
                         return true;
+                    } else {
+                        break;
                     }
                 }
             }
         }
-
         return false;
     }
 
-    private void placeShips(GameGrid grid) {
-        System.out.println();
-        GameGridPrintHelper.printEnemyFieldView(grid);
+    private boolean validateShotInput(String userInput) {
+        return validateUserInputShoot(userInput) == InputValidationState.VALID;
+    }
 
-        for (ShipType shipType : ShipType.values()) {
-            switch (shipType) {
-                case AIRCRAFT_CARRIER -> {
-                    System.out.println();
-                    System.out.println(PLACE_AIRCRAFT_CARRIER);
-                }
-                case BATTLESHIP -> {
-                    System.out.println();
-                    System.out.println(PLACE_BATTLESHIP);
-                }
-                case SUBMARINE -> {
-                    System.out.println();
-                    System.out.println(PLACE_SUBMARINE);
-                }
-                case CRUISER -> {
-                    System.out.println();
-                    System.out.println(PLACE_CRUISER);
-                }
-                case DESTROYER -> {
-                    System.out.println();
-                    System.out.println(PLACE_DESTROYER);
-                }
+    private boolean isGoodShotResult(GridModificationResult shotResult) {
+        switch(shotResult) {
+            case OUT_OF_GAME_GRID -> {
+                System.out.println();
+                System.out.println(WRONG_COORDINATES);
+                return false;
             }
-            placeShip(shipType, grid);
+            case HIT_REGISTERED -> {
+                System.out.println();
+                System.out.println(YOU_HIT_A_SHIP);
+                return true;
+            }
+            case MISS_REGISTERED -> {
+                System.out.println();
+                System.out.println(YOU_MISSED);
+                return true;
+            }
+            case SHIP_SANK -> {
+                System.out.println();
+                System.out.println(YOU_SANK_A_SHIP);
+                return true;
+            }
+            case WINNER -> {
+                isAWinner = true;
+                return true;
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
 
-            System.out.println();
-            GameGridPrintHelper.printAllyFieldView(grid);
+    private InputValidationState validateUserInputShoot(String userProvidedCoordinates) {
+        if (isNotValidCoordinateFormat(userProvidedCoordinates)) {
+            return InputValidationState.WRONG_FORMAT;
+        } else {
+            return InputValidationState.VALID;
+        }
+    }
+
+    private void placeShips(GameGrid grid) {
+        printGameGridView(grid, GameGridViewPerspective.ENEMY_PERSPECTIVE);
+        for (ShipType shipType : ShipType.values()) {
+            printPlaceShipMessage(shipType);
+            placeShip(shipType, grid);
+            printGameGridView(grid, GameGridViewPerspective.ALLY_PERSPECTIVE);
         }
     }
 
     private void placeShip(ShipType shipType, GameGrid grid) {
-        main_loop:
         while (true) {
             String userRawInput = readUsersInputFromConsole();
             List<String> userProvidedCoordinates = new ArrayList<>(Arrays.asList(userRawInput.split(" ")));
-            InputValidationState validationResult = validateUserInputStrategyStage(userProvidedCoordinates);
-            if (validationResult != InputValidationState.VALID) {
-                switch (validationResult) {
-                    case NOT_SAME_LANE_OR_COLUMN -> {
-                        System.out.println();
-                        System.out.println(WRONG_SHIP_LOCATION);
-                    }
-                    case WRONG_FORMAT, WRONG_SIZE -> {}
-                }
-            } else {
+            if (validateShipPlacementInput(userProvidedCoordinates))  {
                 Square frontSquare = new Square(userProvidedCoordinates.get(0));
                 Square rearSquare = new Square(userProvidedCoordinates.get(1));
                 if (!isShipOfCorrectSize(getShipSizeFromCoordinates(frontSquare, rearSquare), shipType)) {
-                    System.out.println();
-                    System.out.printf((WRONG_SHIP_SIZE) + "%n", shipType.getName());
-                } else {
-                    switch(grid.addShip(frontSquare, rearSquare, shipType)) {
-                        case SHIP_OUT_OF_GRID -> {
-                            System.out.println();
-                            System.out.println(WRONG_SHIP_LOCATION);
-                        }
-                        case SHIPS_TO_CLOSE -> {
-                            System.out.println();
-                            System.out.println(TOO_CLOSE_TO_ANOTHER_SHIP);
-                        }
-                        case SHIP_PLACED -> {
-                            break main_loop;
-                        }
-                    }
+                    notifyWrongShipSize(shipType.getName());
+                } else if (isGoodShipAddingResult(grid.addShip(frontSquare, rearSquare, shipType))){
+                        break;
                 }
+            }
+        }
+    }
+
+    private boolean validateShipPlacementInput(List<String> userProvidedCoordinates) {
+        switch (validateUserInputStrategyStage(userProvidedCoordinates)) {
+            case VALID -> {
+                return true;
+            }
+            case NOT_SAME_LANE_OR_COLUMN -> {
+                notifyWrongShipPosition();
+                return false;
+            }
+            default -> {
+                return false;
+            }
+        }
+    }
+
+    private boolean isGoodShipAddingResult(GridModificationResult result) {
+        switch(result) {
+            case OUT_OF_GAME_GRID -> {
+                notifyWrongShipPosition();
+                return false;
+            }
+            case SHIPS_TO_CLOSE -> {
+                notifyTooCloseToAnotherShip();
+                return false;
+            }
+            case SHIP_PLACED -> {
+                return true;
+            }
+            default -> {
+                return false;
             }
         }
     }
@@ -207,16 +196,8 @@ public class BattleshipGame {
     }
 
     private String readUsersInputFromConsole() {
-        System.out.println();
+        emptyLine();
         return scanner.nextLine();
-    }
-
-    private InputValidationState validateUserInputShoot(String userProvidedCoordinates) {
-        if (isNotValidCoordinateFormat(userProvidedCoordinates)) {
-            return InputValidationState.WRONG_FORMAT;
-        } else {
-            return InputValidationState.VALID;
-        }
     }
 
     private InputValidationState validateUserInputStrategyStage(List<String> userProvidedCoordinates) {

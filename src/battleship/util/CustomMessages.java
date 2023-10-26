@@ -29,7 +29,7 @@ public class CustomMessages {
         }
 
         public static final String WRONG_SHIP_SIZE = "Error! Wrong length of the %s! Try again:";
-        public static final String WRONG_SHIP_LOCATION = "Error! Wrong ship location! Try again:";
+        public static final String WRONG_SHIP_POSITION = "Error! Wrong ship location! Try again:";
         public static final String TOO_CLOSE_TO_ANOTHER_SHIP =
                 "Error! You placed it too close to another one. Try again:";
         public static final String WRONG_COORDINATES = "Error! You entered the wrong coordinates! Try again:";
